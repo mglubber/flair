@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from __future__ import print_function
+from flair.bam2Bed12 import junctionsToBed12
 
 ########################################################################
 # File: ssPrep.py
@@ -16,17 +16,16 @@ from __future__ import print_function
 ########################################################################
 # Hot Imports & Global Variable
 ########################################################################
-
-
-import os, sys
+import os
+import sys
 from kerneltree import IntervalTree
 from tqdm import *
 import pybedtools
 
+
 ########################################################################
 # CommandLine
 ########################################################################
-
 class CommandLine(object) :
     '''
     Handle the command line, usage and help requests.
@@ -74,7 +73,6 @@ class CommandLine(object) :
 ########################################################################
 # BED File
 ########################################################################
-
 class BED12(object):
     '''
     Handles BED format file input and output.
@@ -108,7 +106,6 @@ class BED12(object):
             sys.exit(1)
 
     def getLine(self):
-
         with open(self.fname,'r') as entries:
             for entry in entries:
                 cols = entry.rstrip().split()
@@ -118,7 +115,6 @@ class BED12(object):
                 self.sizes =  [int(x) for x in cols[10].split(",")[:-1]] if cols[10][-1] == "," else [int(x) for x in (cols[10]+",").split(",")[:-1]]
                 self.starts = [int(x) for x in cols[11].split(",")[:-1]] if cols[11][-1] == "," else [int(x) for x in (cols[11]+",").split(",")[:-1]]
                 yield cols
-
 
     def bed12toJuncs(self):
         '''
@@ -132,9 +128,7 @@ class BED12(object):
             ss1 = self.start + st + self.sizes[num]
             ss2 = self.start + self.starts[num+1]
             junctions.append((ss1,ss2))
-
         return junctions
-
 
     def bed12toExons(self):
         '''
@@ -147,10 +141,10 @@ class BED12(object):
             exons.append((c1,c2))
         return exons
 
+
 ########################################################################
 # Read
 ########################################################################
-
 class READ(object):
     '''
     Handles Read data.
@@ -160,10 +154,10 @@ class READ(object):
         self.junctions = juncs
         self.chrom   = chrom
 
+
 ########################################################################
 # Junc
 ########################################################################
-
 class SS(object):
     '''
     Handles Junc data.
@@ -177,45 +171,11 @@ class SS(object):
         self.support = set()
         self.usage   = 0
         self.ssCorr  = None
-        
 
 
 ########################################################################
 # Functions
 ########################################################################
-
-def juncsToBed12(start, end, coords):
-    '''
-    Take alignment start, end, and junction coords and convert to block/size bed12 format.
-    start = integer
-    end = integer
-    coords = list formatted like so [(j1_left,j1_right),(j2_left,j2_right)]
-    returns num_exons, sizes, starts
-    '''
-    sizes, starts = [],[]
-    # initial start is 0
-    if len(coords) > 0:
-        for num,junc in enumerate(coords,0):
-            ss1, ss2 = junc
-
-            if num == 0:
-                st = 0
-                size = abs(start-ss1)
-            else:
-                st = coords[num-1][1] - start
-                size =  ss1 - (st + start)
-            starts.append(st)
-            sizes.append(size)
-        st = coords[-1][1] - start
-        size =  end - (st + start)
-        starts.append(st)
-        sizes.append(size)
-        return len(starts), sizes, starts
-    else:
-        return 1, [end-start], [0]
-
-
-
 def ssCorrrect(c,strand,ssType,intTree,ssData):
     '''
     correct un-annotated splice sites.
@@ -247,14 +207,12 @@ def ssCorrrect(c,strand,ssType,intTree,ssData):
             return ssData
 
 
-
 def correctReads(bed, intTree, ssData, filePrefix, correctStrand, wDir):
     ''' Builds read and splice site objects '''
 
     if checkFname: 
         with open(checkFname,'a+') as fo:
             print("** Creating temporary correction files for chromosome %s: %s & %s" % (currentChr, os.path.join(wDir, "%s_inconsistent.bed" % filePrefix), os.path.join(wDir,"%s_corrected.bed" % filePrefix)), file=fo)
-
 
     inconsistent = open(os.path.join(wDir, "%s_inconsistent.bed" % filePrefix),'w')
     corrected = open(os.path.join(wDir,"%s_corrected.bed" % filePrefix),'w')
@@ -277,7 +235,6 @@ def correctReads(bed, intTree, ssData, filePrefix, correctStrand, wDir):
             if c2 not in ssData:
                 ssData = ssCorrrect(c2,strand,c2Type,intTree,ssData)
 
-
             c1Obj, c2Obj = ssData[c1], ssData[c2]
 
             c1Corr = ssData[c1].ssCorr.coord
@@ -293,7 +250,7 @@ def correctReads(bed, intTree, ssData, filePrefix, correctStrand, wDir):
 
             newJuncs.append((c1Corr,c2Corr)) 
 
-        blocks, sizes, starts = juncsToBed12(bedObj.start,bedObj.end,newJuncs)
+        blocks, sizes, starts = junctionsToBed12(bedObj.start, bedObj.end, newJuncs)
         
         if correctStrand:
             if len(ssStrands)>1:
@@ -306,7 +263,6 @@ def correctReads(bed, intTree, ssData, filePrefix, correctStrand, wDir):
         # 0 length exons, remove them.
         minSize = min(sizes)
         if minSize == 0: novelSS = True
-
 
         if novelSS:
             print(bedObj.chrom, bedObj.start, bedObj.end, bedObj.name,
@@ -326,10 +282,6 @@ def correctReads(bed, intTree, ssData, filePrefix, correctStrand, wDir):
     if checkFname: 
         with open(checkFname,'a+') as fo:
             print("** Checking inc/corr files for chromsome %s: %s %s" % (currentChr,inc,cor), file=fo)
-
-
-
-
 
 
 def buildIntervalTree(juncs, wiggle, fasta):
@@ -387,6 +339,7 @@ def buildIntervalTree(juncs, wiggle, fasta):
 
     return x, data
 
+
 def main():
     '''
     maine
@@ -430,8 +383,6 @@ def main():
             with open(checkFname,'a+') as fo:
                 print("** correctReads FAILED for %s" % (bed), file=fo)
         sys.exit(1)
-
-            
 
 
 if __name__ == "__main__":

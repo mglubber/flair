@@ -203,9 +203,9 @@ def addOtherJuncs(juncs, bedJuncs, chromosomes, fa, known):
 
     return juncs, chromosomes
 
+
 def gtfToSSBed(file, knownSS):
     ''' Convenience function, reformats GTF to bed'''
-
 
     # First: get all exons per transcript.
     exons = dict()
@@ -275,8 +275,6 @@ def gtfToSSBed(file, knownSS):
 
 
 def runCMD(x):
-
-
     tDir, prefix,juncs,reads, rs, f, err, errFname = x
     cmd = "%s %s -i %s -j %s -o %s --workingDir %s -f %s " % (sys.executable, helperScript, reads,juncs,prefix, tDir, f)
     if rs:
