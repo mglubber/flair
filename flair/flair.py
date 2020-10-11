@@ -49,12 +49,13 @@ def parse_align():
     minimap2 = get_tool_path(args.m, "minimap2")
     samtools = get_tool_path(args.sam, "samtools")
 
-    return align(args.g, args.r, args.o, make_psl=args.p, chromosome_sizes=args.c, quality=args.q,
+    return align(args.g, args.r, args.o, make_psl=args.p, chromosome_size=args.c, quality=args.q,
                  minimap2_path=minimap2, samtools_path=samtools, threads=args.t, nvrna=args.n, quiet=args.quiet)
 
 
-def align(genome_file, reads_list, output_dir, make_psl=False, chromosome_size=None, quality=0, version=None, prefix="flair.aligned",
-          minimap2_path="minimap2", samtools_path="samtools", threads=4, nvrna=False, quiet=False):
+def align(genome_file, reads_list, output_dir, make_psl=False, chromosome_size=None, quality=0, version=None,
+          prefix="flair.aligned", minimap2_path="minimap2", samtools_path="samtools",
+          threads=4, nvrna=False, quiet=False):
 
     # Pick output for status messages
     if quiet:
